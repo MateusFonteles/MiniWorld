@@ -1,28 +1,56 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // Garante o acesso ao novo sistema
+using UnityEngine.InputSystem; 
 
-public class PlayerController : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
+    // 1. A Velocidade
     public float moveSpeed = 5f;
 
+    // 2. As "Caixas" para guardar nossos componentes
     private Rigidbody2D rb;
+    private Animator animator; 
+    
+    // 3. A "Caixa" para guardar a direção do controle
     private Vector2 moveInput;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>(); 
     }
 
-    // Mudamos o parâmetro para ler o contexto do Input Action da Unity
-    public void OnMove(InputAction.CallbackContext context)
+    public void OnMove(InputValue value)
     {
-        // Lê o valor do movimento enquanto as teclas são pressionadas
-        moveInput = context.ReadValue<Vector2>();
+        moveInput = value.Get<Vector2>();
     }
 
+    void Update()
+    {
+        // Controla a animação
+        bool isMoving = moveInput.sqrMagnitude > 0;
+        animator.SetBool("isWalking", isMoving); 
+
+       // 🟢 NOVIDADE: Envia a direção X e Y para o Animator
+        if (isMoving)
+        {
+            animator.SetFloat("MoveX", moveInput.x);
+            animator.SetFloat("MoveY", moveInput.y);
+        }
+
+        // Vira o personagem para a esquerda ou direita
+        if (moveInput.x < 0)
+        {
+            transform.localScale = new Vector3(-1, 1, 1); 
+        }
+        else if (moveInput.x > 0)
+        {
+            transform.localScale = new Vector3(1, 1, 1);  
+        }
+    }
+    // A PEÇA QUE FALTAVA: Movimento Físico
     void FixedUpdate()
     {
-        // Aplica o movimento físico no gramado
+        // Empurra o Rigidbody na direção do controle, multiplicado pela velocidade
         rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime);
     }
 }
